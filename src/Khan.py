@@ -57,6 +57,12 @@ class Khan:
 		self.root_users = {}
 		self.root_infections = {}
 
+	def clear(self):
+		self.users.clear()
+		self.infections.clear()
+		self.root_users.clear()
+		self.root_infections.clear()
+
 	def add_infection(self, name, parent_name=None, severity=None, contagiousness=None):
 		cur = self.infections.get(name)
 		is_new = cur is None

@@ -16,11 +16,12 @@ def main_prompt(khan):
 		print("[3] Infect a user with a disease (total_infection).")
 		print("[4] Infect at most a certain amount of users if possible (limited_infection).")
 		print("[5] Infect exactly a certain amount of users if possible (limited_infection_perfect).")
-		print("[6] Simulate user-infection interaction.")
+		print("[6] Simulate real-time user-infection interaction.")
 		print("[7] Print the infection hierarchy.")
 		print("[8] Print the user hierarchy and each user's associated infections.")
 		print("[9] Reset all users and infections to defaults.")
-		print("[10] Exit.")
+		print("[10] Clear all users and infections.")
+		print("[11] Exit.")
 
 
 		try:
@@ -51,6 +52,8 @@ def main_prompt(khan):
 		elif num == 9:
 			reset(khan)
 		elif num == 10:
+			clear(khan)
+		elif num == 11:
 			print("Goodbye!")
 			return
 		else:
@@ -358,6 +361,10 @@ def reset(khan):
 		inf.malevolent = False
 
 	print("Successfully disinfected all users and reset all infection malevolent flags!")
+
+def clear(khan):
+	khan.clear()
+	print("Successfully cleared all users and infections!")
 
 if __name__ == "__main__":
 	freeze_support()
