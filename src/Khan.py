@@ -1,6 +1,7 @@
 from collections import deque
 
 class User:
+	name = None
 	def __init__(self, name):
 		self.name = name
 		self.parents = set()
@@ -30,14 +31,14 @@ class Infection:
 
 	def set_severity(self, severity):
 		if severity is not None:
-			self.__severity__ = min(max(int(severity), 0), 100)
+			self.__severity__ = min(max(int(severity), 1), 100)
 
 	def get_contagiousness(self):
 		return self.__contagiousness__
 
 	def set_contagiousness(self, contagiousness):
 		if contagiousness is not None:
-			self.contagiousness = min(max(int(contagiousness), 0), 100)
+			self.contagiousness = min(max(int(contagiousness), 1), 100)
 
 	def __eq__(self, other):
 		return isinstance(other, self.__class__) and self.name == other.name
@@ -102,8 +103,7 @@ class Khan:
 			# Add infection to parent's list of children
 			parent.children.add(cur)
 			# Add all of parent's infections
-			for infection in parent.infections:
-				cur.infections.add(infection)
+			cur.infections.update(parent.infections)
 
 		if len(cur.parents) < 1:
 			self.root_users[cur.name] = cur
@@ -166,7 +166,7 @@ class Khan:
 	def __print_users__(self, children, print_infections, indent=0):
 		for user in children:
 			# Print indentation
-			print("{}{}{}".format('.' * (indent * 4), user.name, '(' + ', '.join(map(str, user.infections)) + ')' if print_infections and len(user.infections) > 0 else ""))
+			print("{}{}{}".format('.' * (indent * 4), user.name, ' (Infections: ' + ', '.join(map(str, user.infections)) + ')' if print_infections and len(user.infections) > 0 else ""))
 			# Print children recursively
 			self.__print_users__(user.children, print_infections, indent + 1)
 

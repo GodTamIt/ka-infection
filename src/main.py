@@ -1,7 +1,9 @@
 from Khan import Khan, Infection, User
 import re
+from multiprocessing import Pool, freeze_support, Value
+import glob
 
-__infection_regex__ = re.compile("(?P<indent>\\s*)(?P<name>\\w+)(\\((?P<severity>\\d+)(,\\s*(?P<contagiousness>\\d+))?\\))?")
+__infection_regex__ = re.compile("(?P<indent>\\s*)(?P<name>\\S.*?)\\s*(\\((?P<severity>\\d+)?(,\\s*(?P<contagiousness>\\d+))?\\))")
 __user_regex__ = re.compile("(?P<indent>\\s*)(?P<name>\\S.*)")
 
 def main_prompt(khan):
@@ -240,6 +242,7 @@ def limited_infection_perfect(khan):
 	possibilities = []
 	for root_user in khan.root_users.values():
 		count = __count_users__([root_user])
+
 		if count < target:
 			possibilities.append((count, root_user))
 
@@ -267,6 +270,63 @@ def __count_users__(users):
 	return count
 
 def __limited_target__(possibilities, target):
+	is_done = Value('B', 0)
+
+	poss_arr = [possibilities[i:] for i in range(len(possibilities))]
+
+	#workers = [Process(target=__limited_target_threaded__, args=(poss, target, is_done, q)) for poss in poss_arr]
+	with Pool(initializer=__limited_init__, initargs=(is_done,)) as pool:
+		out = [pool.apply_async(__limited_target_threaded__, [poss, target]) for poss in poss_arr]
+		results = [o.get() for o in out]
+
+	# with Pool() as pool:
+	# 	results = pool.starmap(__limited_target_threaded__, zip(, repeat(target), repeat(is_done)))
+
+	best = (0, [])
+	for result in results:
+		if result[0] > best[0]:
+			best = result
+
+	return best
+
+def __limited_target_threaded__(possibilities, target):
+	if target < 0:
+		return (-1, None)
+	elif target == 0:
+		return (0, [])
+
+	best = (0, [])
+	for i in range(len(possibilities)):
+		if glob.is_done.value != 0:
+			break
+
+		cur_pos = possibilities[i]
+
+		# Skip this iteration if the root already has too many
+		if cur_pos[0] > target:
+			continue
+
+		# Recursively check for best solution for target
+		cur_val = __limited_target_threaded__(possibilities[i+1:], target - cur_pos[0])
+
+		if cur_pos[0] + cur_val[0] > best[0]:
+			# Add current node to the latest permutation
+			cur_val = (cur_pos[0] + cur_val[0], cur_val[1])
+			cur_val[1].append(cur_pos[1])
+
+			# Set current permutation as the best
+			best = cur_val
+
+		if best[0] == target:
+			glob.is_done.value = 1
+			break
+
+	return best
+
+def __limited_init__(is_done):
+	glob.is_done = is_done
+
+def __limited_target_old__(possibilities, target):
 	if target < 0:
 		return (-1, None)
 	elif target == 0:
@@ -303,6 +363,7 @@ def reset(khan):
 	print("Uninfected all users and reset all infection malevolent flags!")
 
 if __name__ == "__main__":
+	freeze_support()
 	khan = Khan()
 
 	# Prompt user with the main part of the program
