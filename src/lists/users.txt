@@ -19,7 +19,6 @@ Sylvester
 Raymond
 Johnson
 	Ilya
-	Rachel
 	Olly
 		Oleg
 		Sara
