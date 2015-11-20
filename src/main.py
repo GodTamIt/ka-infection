@@ -2,6 +2,7 @@ from Khan import Khan, Infection, User
 import re
 from multiprocessing import Pool, freeze_support, Value
 import glob
+import sim
 
 __infection_regex__ = re.compile("(?P<indent>\\s*)(?P<name>\\S.*?)\\s*(\\((?P<severity>\\d+)?(,\\s*(?P<contagiousness>\\d+))?\\))")
 __user_regex__ = re.compile("(?P<indent>\\s*)(?P<name>\\S.*)")
@@ -40,7 +41,7 @@ def main_prompt(khan):
 		elif num == 5:
 			limited_infection_perfect(khan)
 		elif num == 6:
-			print("The simulator has not been implemented yet!")
+			sim.simulate(khan)
 		elif num == 7:
 			print("***** Infections *****")
 			khan.print_infections(True)
@@ -203,9 +204,6 @@ def limited_infection(khan):
 	for user in to_infect[1]:
 		infected.update(khan.infect_user(user.name, infection))
 
-	# Sanity check that we infected the right amount of people
-	assert len(infected) == to_infect[0]
-
 	print("Infected {} user(s)!".format(to_infect[0]))
 	print("User(s) infected: {{{}}}".format(', '.join(map(str, infected))))
 
@@ -255,8 +253,6 @@ def limited_infection_perfect(khan):
 		for user in to_infect[1]:
 			infected.update(khan.infect_user(user.name, infection))
 
-		# Sanity check that we infected the right amount of people
-		assert len(infected) == to_infect[0]
 
 		print("Infected exactly {} user(s)!".format(to_infect[0]))
 		print("User(s) infected: {{{}}}".format(', '.join(map(str, infected))))
@@ -274,7 +270,6 @@ def __limited_target__(possibilities, target):
 
 	poss_arr = [possibilities[i:] for i in range(len(possibilities))]
 
-	#workers = [Process(target=__limited_target_threaded__, args=(poss, target, is_done, q)) for poss in poss_arr]
 	with Pool(initializer=__limited_init__, initargs=(is_done,)) as pool:
 		out = [pool.apply_async(__limited_target_threaded__, [poss, target]) for poss in poss_arr]
 		results = [o.get() for o in out]
@@ -286,6 +281,8 @@ def __limited_target__(possibilities, target):
 	for result in results:
 		if result[0] > best[0]:
 			best = result
+			if best[0] == target:
+				break
 
 	return best
 
@@ -360,7 +357,7 @@ def reset(khan):
 	for inf in khan.infections.values():
 		inf.malevolent = False
 
-	print("Uninfected all users and reset all infection malevolent flags!")
+	print("Successfully disinfected all users and reset all infection malevolent flags!")
 
 if __name__ == "__main__":
 	freeze_support()

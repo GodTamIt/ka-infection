@@ -18,6 +18,7 @@ class User:
 		return self.name
 
 class Infection:
+	name = None
 	def __init__(self, name):
 		self.name = str(name)
 		self.parents = set()
@@ -113,6 +114,8 @@ class Khan:
 		return is_new
 
 	def infect_user(self, user_name, infection_name=None):
+		# Keep track of users already infected
+		infected = set()
 
 		# Get user to start infection spread
 		cur_user = self.users.get(user_name)
@@ -138,8 +141,6 @@ class Khan:
 					inf_q.extend(cur_inf.parents)
 
 
-		# Keep track of users already infected
-		infected = set()
 		# Add initial user to infection to-add list (queue)
 		user_q = deque()
 		user_q.append(cur_user)
@@ -157,6 +158,51 @@ class Khan:
 				user_q.extend(cur_user.children)
 
 		return infected
+
+	def disinfect_user(self, user_name, infection_name):
+		# Keep track of users already disinfected
+		disinfected = set()
+
+		# Get user that is infected
+		cur_user = self.users.get(user_name)
+		# Get infection to quarantine (if not None)
+		infections = self.infections.get(infection_name)
+
+		if cur_user is None:
+			return disinfected
+			#raise ValueError("User '{}' does not exist.".format(user_name))
+		elif infection_name is not None and infections is None:
+			return disinfected
+			#raise ValueError("Infection '{}' does not exist.".format(infection_name))
+
+		# Get all children infections (of current infection)
+		inf_q = deque([infections])
+		infections = set()
+
+		while len(inf_q) > 0:
+			cur_inf = inf_q.popleft()
+			if cur_inf not in infections:
+				infections.add(cur_inf)
+				inf_q.extend(cur_inf.children)
+
+
+
+		# Add initial user to infection to-add list (queue)
+		user_q = deque()
+		user_q.append(cur_user)
+
+		while len(user_q) > 0:
+			cur_user = user_q.popleft()
+			if cur_user not in disinfected:
+				# disinfect the current user and add it to the set of disinfected
+				disinfected.add(cur_user)
+				cur_user.infections = cur_user.infections - infections
+
+				# Add the parents and children to the queue
+				user_q.extend(cur_user.parents)
+				user_q.extend(cur_user.children)
+
+		return disinfected
 
 	def print_users(self, users=None, print_infections=False):
 		if users is None:
