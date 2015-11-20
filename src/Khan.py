@@ -113,36 +113,48 @@ class Khan:
 		return is_new
 
 	def infect_user(self, user_name, infection_name=None):
-		infected = set()
-		q = deque()
 
 		# Get user to start infection spread
-		cur = self.users.get(user_name)
+		cur_user = self.users.get(user_name)
 		# Get infection to spread (if not None)
-		infection = None if infection_name is None else self.infections.get(infection_name)
+		infections = None if infection_name is None else self.infections.get(infection_name)
 
-		if cur is None:
+		if cur_user is None:
 			return infected
 			#raise ValueError("User '{}' does not exist.".format(user_name))
-		elif infection_name is not None and infection is None:
+		elif infection_name is not None and infections is None:
 			return infected
 			#raise ValueError("Infection '{}' does not exist.".format(infection_name))
 
-		# Add initial user to infection to-add list (queue)
-		q.append(cur)
+		# Get all parent infections (of current infection)
+		if infections is not None:
+			inf_q = deque([infections])
+			infections = set()
 
-		while len(q) > 0:
-			cur = q.popleft()
-			if cur not in infected:
+			while len(inf_q) > 0:
+				cur_inf = inf_q.popleft()
+				if cur_inf not in infections:
+					infections.add(cur_inf)
+					inf_q.extend(cur_inf.parents)
+
+
+		# Keep track of users already infected
+		infected = set()
+		# Add initial user to infection to-add list (queue)
+		user_q = deque()
+		user_q.append(cur_user)
+
+		while len(user_q) > 0:
+			cur_user = user_q.popleft()
+			if cur_user not in infected:
 				# Infect the current user and add it to the set of infected
-				infected.add(cur)
-				if infection is not None:
-					cur.infections.add(infection)
-					cur.infections.update(infection.parents)
+				infected.add(cur_user)
+				if infections is not None:
+					cur_user.infections.update(infections)
 
 				# Add the parents and children to the queue
-				q.extend(cur.parents)
-				q.extend(cur.children)
+				user_q.extend(cur_user.parents)
+				user_q.extend(cur_user.children)
 
 		return infected
 

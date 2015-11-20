@@ -38,16 +38,17 @@ def main_prompt(khan):
 		elif num == 5:
 			limited_infection_perfect(khan)
 		elif num == 6:
-			print("Simulation")
+			print("The simulator has not been implemented yet!")
 		elif num == 7:
 			print("***** Infections *****")
 			khan.print_infections(True)
 		elif num == 8:
 			print("***** Users *****")
-			khan.print_users(True)
+			khan.print_users(print_infections=True)
 		elif num == 9:
-			print("Resetting simulation data...done.")
+			reset(khan)
 		elif num == 10:
+			print("Goodbye!")
 			return
 		else:
 			print("Please enter a valid number!")
@@ -99,7 +100,7 @@ def get_users(khan):
 		with open(s, 'r') as content_file:
 			content = content_file.read()
 		added = __parse_users__(khan, content)
-		print("Added {} new users, updated {} existing users!\n".format(added[0], added[1]))
+		print("Added {} new user(s), updated {} existing user(s)!\n".format(added[0], added[1]))
 	except:
 		print("Error: failed to parse file!\n")
 
@@ -156,7 +157,8 @@ def total_infection(khan):
 
 	infected = khan.infect_user(user, infection)
 
-	print("Infected: {}".format(', '.join(map(str, infected))))
+	print("Infected {} user(s)!".format(len(infected)))
+	print("User(s) infected: {{{}}}".format(', '.join(map(str, infected))))
 
 def limited_infection(khan):
 	while True:
@@ -290,6 +292,15 @@ def __limited_target__(possibilities, target):
 			best = cur_val
 
 	return best
+
+def reset(khan):
+	for user in khan.users.values():
+		user.infections.clear()
+
+	for inf in khan.infections.values():
+		inf.malevolent = False
+
+	print("Uninfected all users and reset all infection malevolent flags!")
 
 if __name__ == "__main__":
 	khan = Khan()
